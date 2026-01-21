@@ -27,8 +27,9 @@ pip install -r requirements.txt
 This API was tested using postgres. In order to bring it up, the following commands are needed:
 
 1) Start postgres locally with `docker run --net=host --name titanic-db -e POSTGRES_PASSWORD=password -e POSTGRES_USER=user -d postgres`
+for macbook use `docker run -p 5432:5432 --name titanic-db -e POSTGRES_PASSWORD=password -e POSTGRES_USER=user -d postgres`
 3) Run the sql file with the database definition `docker cp titanic.sql titanic-db:/`
-4) Run the sql file with `docker exec -it --rm titanic-db psql -U user -d postgres -f titanic.sql`
+4) Run the sql file with `docker exec -it titanic-db psql -U user -d postgres -f titanic.sql`
 
 
 After you have database server deployed and running, use environment variable `DATABASE_URL` to provide database connection string.
