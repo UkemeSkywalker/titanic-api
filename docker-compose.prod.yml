@@ -1,48 +1,48 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: titanic-db
+    container_name: titanic-db-prod
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_prod:/var/lib/postgresql/data
       - ./titanic.sql:/docker-entrypoint-initdb.d/titanic.sql
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: always
     networks:
       - titanic-network
 
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
-    container_name: titanic-api
+      dockerfile: Dockerfile
+    container_name: titanic-api-prod
     environment:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-postgres}
-      FLASK_ENV: ${FLASK_ENV:-development}
-    volumes:
-      - ./src:/app/src
-      - ./run.py:/app/run.py
+      FLASK_ENV: production
     ports:
       - "5000:5000"
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/people').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: always
     networks:
       - titanic-network
 
 volumes:
-  postgres_data:
-    driver: local
+  postgres_data_prod:
 
 networks:
   titanic-network:

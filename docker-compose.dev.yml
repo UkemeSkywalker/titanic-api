@@ -1,22 +1,21 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: titanic-db
+    container_name: titanic-db-dev
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
       - ./titanic.sql:/docker-entrypoint-initdb.d/titanic.sql
     ports:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
-    restart: unless-stopped
     networks:
       - titanic-network
 
@@ -24,10 +23,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: titanic-api
+    container_name: titanic-api-dev
     environment:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-postgres}
-      FLASK_ENV: ${FLASK_ENV:-development}
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
     volumes:
       - ./src:/app/src
       - ./run.py:/app/run.py
@@ -41,8 +41,7 @@ services:
       - titanic-network
 
 volumes:
-  postgres_data:
-    driver: local
+  postgres_data_dev:
 
 networks:
   titanic-network:

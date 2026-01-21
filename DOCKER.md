@@ -1,38 +1,50 @@
 # Docker Setup Guide
 
-## Quick Start
+## Development Workflow
 
-### Using Docker Compose (Recommended)
+### Start Development Environment (with hot-reload)
 
 1. **Copy environment file:**
    ```bash
    cp .env.example .env
    ```
 
-2. **Build and start services:**
+2. **Start services:**
    ```bash
    docker-compose up -d --build
    ```
-
-3. **Check service health:**
+   or explicitly:
    ```bash
-   docker-compose ps
+   docker-compose -f docker-compose.dev.yml up -d --build
    ```
 
-4. **View logs:**
+3. **View logs with hot-reload:**
    ```bash
    docker-compose logs -f app
    ```
 
-5. **Stop services:**
+4. **Make code changes** - Flask will auto-reload!
+
+### Production Deployment
+
+1. **Update .env for production:**
    ```bash
-   docker-compose down
+   FLASK_ENV=production
    ```
 
-6. **Stop and remove volumes:**
+2. **Start production services:**
    ```bash
-   docker-compose down -v
+   docker-compose -f docker-compose.prod.yml up -d --build
    ```
+
+3. **Check service health:**
+   ```bash
+   docker-compose -f docker-compose.prod.yml ps
+   ```
+
+## Database Initialization
+
+Database is automatically initialized on first run via `titanic.sql` mounted to `/docker-entrypoint-initdb.d/`
 
 ## Testing the API
 
@@ -52,11 +64,17 @@
    curl http://localhost:5000/people
    ```
 
-## Manual Docker Build
+## Stop Services
 
 ```bash
-docker build -t titanic-api:latest .
-docker run -p 5000:5000 -e DATABASE_URL=postgresql+psycopg2://user:password@host:5432/postgres titanic-api:latest
+# Development
+docker-compose down
+
+# Production
+docker-compose -f docker-compose.prod.yml down
+
+# Remove volumes
+docker-compose down -v
 ```
 
 ## Image Size Verification
