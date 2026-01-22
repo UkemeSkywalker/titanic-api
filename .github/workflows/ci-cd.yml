@@ -47,11 +47,16 @@ jobs:
 
       - name: Lint with flake8
         run: |
+          echo "Running flake8 linting..."
           flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 src/ --count --max-complexity=10 --max-line-length=127 --statistics
+          echo "✅ Linting passed!"
 
       - name: Check code formatting
-        run: black --check src/
+        run: |
+          echo "Checking code formatting with black..."
+          black --check src/ --diff
+          echo "✅ Code formatting is correct!"
 
       - name: Initialize database
         env:
