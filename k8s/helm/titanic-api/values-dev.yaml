@@ -20,3 +20,8 @@ resources:
 autoscaling:
   minReplicas: 2
   maxReplicas: 10
+
+secrets:
+  dbCredentials:
+    name: db-credentials
+    key: database_url

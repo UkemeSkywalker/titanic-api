@@ -18,13 +18,21 @@ SECRET_JSON=$(aws secretsmanager get-secret-value \
   --query SecretString \
   --output text)
 
-# Extract database URL
+# Extract values
 DATABASE_URL=$(echo $SECRET_JSON | jq -r .database_url)
+DB_HOST=$(echo $SECRET_JSON | jq -r .host | cut -d: -f1)
+DB_USERNAME=$(echo $SECRET_JSON | jq -r .username)
+DB_PASSWORD=$(echo $SECRET_JSON | jq -r .password)
+DB_NAME=$(echo $SECRET_JSON | jq -r .dbname)
 
 # Create Kubernetes secret
 kubectl create secret generic db-credentials \
   --from-literal=database_url="$DATABASE_URL" \
-  --namespace=$ENVIRONMENT \
+  --from-literal=host="$DB_HOST" \
+  --from-literal=username="$DB_USERNAME" \
+  --from-literal=password="$DB_PASSWORD" \
+  --from-literal=dbname="$DB_NAME" \
+  --namespace=titanic-api-$ENVIRONMENT \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "✅ Secrets synced successfully!"
