@@ -1,0 +1,13 @@
+# Example Terraform Variables
+# Copy this file and update with your values
+# DO NOT commit actual secrets to git
+
+# Database password (required)
+# Generate with: openssl rand -base64 32
+db_password = "CHANGE_ME_SECURE_PASSWORD"
+
+# Optional overrides
+# aws_region = "us-east-1"
+# vpc_cidr = "10.0.0.0/16"
+# eks_cluster_version = "1.28"
+# db_instance_class = "db.t3.micro"
