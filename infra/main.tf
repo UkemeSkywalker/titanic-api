@@ -42,6 +42,7 @@ module "rds" {
   private_subnet_ids = module.vpc.private_subnet_ids
   db_name            = var.db_name
   db_username        = var.db_username
+  db_password        = var.db_password
   instance_class     = var.db_instance_class
 }
 

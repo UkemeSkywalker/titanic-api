@@ -22,7 +22,7 @@ echo "Action: $ACTION"
 echo ""
 
 # Check if backend exists
-if ! aws s3 ls s3://$uhjnBUCKET_NAME 2>/dev/null; then
+if ! aws s3 ls s3://$BUCKET_NAME 2>/dev/null; then
   echo "⚠️  Backend S3 bucket not found. Creating..."
   ./scripts/setup-backend.sh
 fi
