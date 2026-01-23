@@ -24,9 +24,9 @@ resource "aws_eks_node_group" "main" {
   subnet_ids      = var.private_subnet_ids
 
   scaling_config {
-    desired_size = var.environment == "prod" ? 3 : 2
-    max_size     = var.environment == "prod" ? 5 : 3
-    min_size     = var.environment == "prod" ? 2 : 1
+    desired_size = var.environment == "prod" ? 3 : 3
+    max_size     = var.environment == "prod" ? 5 : 4
+    min_size     = var.environment == "prod" ? 2 : 2
   }
 
   instance_types = var.environment == "prod" ? ["t3.medium"] : ["t3.small"]

@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: ukemzyskywalker/titanic-api
@@ -18,7 +18,7 @@ resources:
     cpu: "500m"
 
 autoscaling:
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 10
 
 secrets:
