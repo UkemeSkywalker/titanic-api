@@ -2,6 +2,7 @@
 set -e
 
 ENVIRONMENT=$1
+NAMESPACE="titanic-api-$ENVIRONMENT"
 REGION=${2:-us-east-1}
 
 if [ -z "$ENVIRONMENT" ]; then
@@ -25,7 +26,7 @@ fi
 
 # Create namespace
 echo "📦 Creating namespace..."
-kubectl create namespace $ENVIRONMENT --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
 # Sync secrets
 echo "🔐 Syncing secrets..."
@@ -39,15 +40,15 @@ envsubst < k8s/deployment.yaml | kubectl apply -f -
 
 # Wait for deployment
 echo "⏳ Waiting for deployment to be ready..."
-kubectl rollout status deployment/titanic-api -n $ENVIRONMENT --timeout=5m
+kubectl rollout status deployment/titanic-api -n $NAMESPACE --timeout=5m
 
 # Get service endpoint
 echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "📊 Service status:"
-kubectl get svc titanic-api -n $ENVIRONMENT
+kubectl get svc titanic-api -n $NAMESPACE
 
 echo ""
 echo "🔗 Get load balancer URL:"
-echo "kubectl get svc titanic-api -n $ENVIRONMENT -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'"
+echo "kubectl get svc titanic-api -n $NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'"
