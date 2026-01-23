@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "titanic-api.fullname" . }}-db-init
+  labels:
+    {{- include "titanic-api.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: {{ include "titanic-api.name" . }}-db-init
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-init
+        image: postgres:17-alpine
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Initializing database..."
+          
+          # Wait for database to be ready
+          until pg_isready -h $DB_HOST -U $DB_USER; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+          
+          # Check if table exists
+          TABLE_EXISTS=$(PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'people');")
+          
+          if [ "$TABLE_EXISTS" = "t" ]; then
+            echo "Table 'people' already exists. Skipping initialization."
+            exit 0
+          fi
+          
+          echo "Creating table 'people'..."
+          
+          # Create table
+          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME <<-EOSQL
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+            
+            CREATE TABLE people (
+              uuid uuid DEFAULT uuid_generate_v4 (),
+              survived INT NOT NULL,
+              "passengerClass" INT NOT NULL,
+              name VARCHAR(255) NOT NULL,
+              sex VARCHAR(255) NOT NULL,
+              age REAL NOT NULL,
+              "siblingsOrSpousesAboard" INT NOT NULL,
+              "parentsOrChildrenAboard" INT NOT NULL,
+              fare REAL NOT NULL
+            );
+          EOSQL
+          
+          echo "Database initialized successfully!"
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.dbCredentials.name }}
+              key: host
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.dbCredentials.name }}
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.dbCredentials.name }}
+              key: password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.dbCredentials.name }}
+              key: dbname
