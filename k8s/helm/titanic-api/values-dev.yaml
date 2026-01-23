@@ -1,0 +1,22 @@
+replicaCount: 2
+
+image:
+  repository: ukemzyskywalker/titanic-api
+  pullPolicy: IfNotPresent
+  tag: "pr-4"
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/dev-titanic-api-role"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 10
