@@ -33,6 +33,7 @@ Edit IAM role ARNs in values files:
 - `helm/titanic-api/values-staging.yaml`
 - `helm/titanic-api/values-prod.yaml`
 
+
 ### 3. Deploy Applications
 ```bash
 # Deploy all environments
@@ -42,6 +43,15 @@ kubectl apply -f argocd/applications/
 kubectl apply -f argocd/applications/dev.yaml
 kubectl apply -f argocd/applications/staging.yaml
 kubectl apply -f argocd/applications/prod.yaml
+```
+
+### 4. Sync Database Secrets
+```bash
+
+# Sync secrets for each environment
+./sync-secrets.sh dev us-east-1
+./sync-secrets.sh staging us-east-1
+./sync-secrets.sh prod us-east-1
 ```
 
 ## How It Works
