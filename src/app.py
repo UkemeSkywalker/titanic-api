@@ -23,7 +23,8 @@ def create_app(env_name: str) -> Flask:
 
     # Initialize Prometheus metrics
     metrics = PrometheusMetrics(app)
-    metrics.info("app_info", "Application info", version="1.0.0")
+    if env_name != "testing":
+        metrics.info("app_info", "Application info", version="1.0.0")
 
     # Initialize database
     db.init_app(app)
