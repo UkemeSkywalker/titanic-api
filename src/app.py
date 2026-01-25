@@ -20,14 +20,14 @@ def create_app(env_name: str) -> Flask:
     """
     app = Flask(__name__)
     app.config.from_object(app_config[env_name])
-    
+
     # Initialize Prometheus metrics
     metrics = PrometheusMetrics(app)
     metrics.info('app_info', 'Application info', version='1.0.0')
-    
+
     # Initialize database
     db.init_app(app)
-    
+
     logger.info(f"Application initialized with environment: {env_name}")
 
     app.register_blueprint(people, url_prefix="/")
@@ -43,7 +43,7 @@ def create_app(env_name: str) -> Flask:
         return """
         Welcome to the Titanic API
         """
-    
+
     @app.route("/health", methods=["GET"])
     def health():
         """Health check endpoint"""
