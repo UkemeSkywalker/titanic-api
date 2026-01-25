@@ -1,9 +1,9 @@
-replicaCount: 1
+replicaCount: 2
 
 image:
   repository: ukemzyskywalker/titanic-api
   pullPolicy: IfNotPresent
-  tag: "v1.0.1"
+  tag: "v1.0.2"
 
 serviceAccount:
   create: true

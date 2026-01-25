@@ -1,9 +1,9 @@
-replicaCount: 1
+replicaCount: 2
 
 image:
   repository: ukemzyskywalker/titanic-api
   pullPolicy: IfNotPresent
-  tag: "v1.0.1"
+  tag: "v1.0.2"
 
 serviceAccount:
   annotations:
@@ -18,7 +18,7 @@ resources:
     cpu: "500m"
 
 autoscaling:
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
 
 secrets:
