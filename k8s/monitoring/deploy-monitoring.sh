@@ -38,5 +38,5 @@ echo "📊 Grafana: kubectl port-forward -n monitoring svc/prometheus-grafana 30
 echo "📈 Prometheus: kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"
 echo ""
 echo "🔑 Grafana Password:"
-kubectl get secret -n monitoring prometheus-grafana -o jsonpath='{.data.admin-password}' | base64 -d
+echo " Run: kubectl get secret -n monitoring prometheus-grafana -o jsonpath='{.data.admin-password}' | base64 -d"
 echo ""
