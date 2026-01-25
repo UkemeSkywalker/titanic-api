@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 
-ENVIRONMENT=${1:-dev}
+ENVIRONMENT=$1
+
+if [ -z "$ENVIRONMENT" ]; then
+  echo "Usage: ./deploy-monitoring.sh <dev|staging|prod>"
+  exit 1
+fi
 
 echo "🚀 Quick Deploy Monitoring for $ENVIRONMENT"
 echo ""
