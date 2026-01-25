@@ -97,7 +97,7 @@ def add_passenger() -> Response:
     new_passenger.save()
 
     serialized_data = person_schema.dump(new_passenger)
-    logger.info("Passenger added", extra={"passenger_id": str(new_passenger.id)})
+    logger.info("Passenger added", extra={"passenger_id": str(new_passenger.uuid)})
 
     return custom_response(serialized_data, 200)
 
