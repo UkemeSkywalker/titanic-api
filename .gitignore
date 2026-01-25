@@ -63,3 +63,6 @@ secrets/
 *.pem
 *.key
 *.crt
+
+# Test Coverage
+.coverage

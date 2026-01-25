@@ -96,12 +96,12 @@ class PersonSchema(Schema):
     Schema of the table representing a person in the database
     """
 
-    uuid = fields.UUID(required=True)
+    uuid = fields.UUID(dump_only=True)
     survived = fields.Int(required=True)
     passengerClass = fields.Int(required=True)
     name = fields.String(required=True)
     sex = fields.String(required=True)
-    age = fields.Int(required=True)
+    age = fields.Float(required=True)
     siblingsOrSpousesAboard = fields.Int(required=True)
     parentsOrChildrenAboard = fields.Int(required=True)
     fare = fields.Float(required=True)
