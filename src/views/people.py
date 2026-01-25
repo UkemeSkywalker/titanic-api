@@ -1,8 +1,10 @@
 from flask import request, json, Response, Blueprint
+import logging
 from ..models.person import Person, PersonSchema
 
 people_api = Blueprint("people", __name__)
 person_schema = PersonSchema()
+logger = logging.getLogger(__name__)
 
 
 @people_api.route("people", methods=["GET"])
@@ -13,8 +15,10 @@ def get_all() -> Response:
     Returns:
         Response containing all people
     """
+    logger.info("Fetching all people")
     people = Person.get_all()
     people_serialized = person_schema.dump(people, many=True)
+    logger.info("Retrieved people", extra={"count": len(people_serialized)})
 
     return custom_response(people_serialized, 200)
 
@@ -85,6 +89,7 @@ def add_passenger() -> Response:
     Returns:
         Response containing the added person
     """
+    logger.info("Adding new passenger")
     request_data = request.get_json()
     data = person_schema.load(request_data, partial=True)
 
@@ -92,6 +97,7 @@ def add_passenger() -> Response:
     new_passenger.save()
 
     serialized_data = person_schema.dump(new_passenger)
+    logger.info("Passenger added", extra={"passenger_id": str(new_passenger.id)})
 
     return custom_response(serialized_data, 200)
 

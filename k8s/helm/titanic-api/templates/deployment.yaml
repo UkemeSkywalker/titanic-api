@@ -15,6 +15,10 @@ spec:
       {{- include "titanic-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.targetPort }}"
+        prometheus.io/path: "/metrics"
       labels:
         {{- include "titanic-api.selectorLabels" . | nindent 8 }}
     spec:
