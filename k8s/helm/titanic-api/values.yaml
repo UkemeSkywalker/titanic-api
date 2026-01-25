@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ukemzyskywalker/titanic-api
   pullPolicy: IfNotPresent
-  tag: "pr-4"
+  tag: "v1.0.1"
 
 serviceAccount:
   create: true
