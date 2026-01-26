@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 
-ENVIRONMENT=${1:-dev}
+ENVIRONMENT=$1
+
+if [ -z "$ENVIRONMENT" ]; then
+  echo "Usage: ./deploy-monitoring.sh <dev|staging|prod>"
+  exit 1
+fi
 
 echo "🚀 Quick Deploy Monitoring for $ENVIRONMENT"
 echo ""
@@ -33,5 +38,5 @@ echo "📊 Grafana: kubectl port-forward -n monitoring svc/prometheus-grafana 30
 echo "📈 Prometheus: kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"
 echo ""
 echo "🔑 Grafana Password:"
-kubectl get secret -n monitoring prometheus-grafana -o jsonpath='{.data.admin-password}' | base64 -d
+echo " Run: kubectl get secret -n monitoring prometheus-grafana -o jsonpath='{.data.admin-password}' | base64 -d"
 echo ""
