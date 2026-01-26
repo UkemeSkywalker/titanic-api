@@ -1,0 +1,66 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_from: '{{ .ExternalURL }}'
+      smtp_smarthost: '{{ .ExternalURL }}'
+      smtp_auth_username: '{{ .ExternalURL }}'
+      smtp_auth_password: '{{ .ExternalURL }}'
+      smtp_require_tls: true
+
+    route:
+      group_by: ['alertname', 'namespace', 'severity']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'email-notifications'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'email-critical'
+          continue: true
+        - match:
+            severity: warning
+          receiver: 'email-warning'
+
+    receivers:
+      - name: 'email-notifications'
+        email_configs:
+          - to: '{{ .ExternalURL }}'
+            send_resolved: true
+            headers:
+              Subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }} - {{ .GroupLabels.namespace }}'
+            html: |
+              <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+              <p><strong>Status:</strong> {{ .Status }}</p>
+              <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+              <p><strong>Namespace:</strong> {{ .GroupLabels.namespace }}</p>
+              <p><strong>Summary:</strong> {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}</p>
+              <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+
+      - name: 'email-critical'
+        email_configs:
+          - to: '{{ .ExternalURL }}'
+            send_resolved: true
+            headers:
+              Subject: '🔴 CRITICAL: {{ .GroupLabels.alertname }} - {{ .GroupLabels.namespace }}'
+            html: |
+              <h1 style="color: red;">🔴 CRITICAL ALERT</h1>
+              <h2>{{ .GroupLabels.alertname }}</h2>
+              <p><strong>Namespace:</strong> {{ .GroupLabels.namespace }}</p>
+              <p><strong>Summary:</strong> {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}</p>
+              <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+              <p><strong>Action Required:</strong> Immediate investigation needed!</p>
+
+      - name: 'email-warning'
+        email_configs:
+          - to: '{{ .ExternalURL }}'
+            send_resolved: true
+            headers:
+              Subject: '⚠️ WARNING: {{ .GroupLabels.alertname }} - {{ .GroupLabels.namespace }}'
+            html: |
+              <h2 style="color: orange;">⚠️ WARNING</h2>
+              <h3>{{ .GroupLabels.alertname }}</h3>
+              <p><strong>Namespace:</strong> {{ .GroupLabels.namespace }}</p>
+              <p><strong>Summary:</strong> {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}</p>
+              <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>

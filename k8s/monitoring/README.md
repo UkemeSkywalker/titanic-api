@@ -85,21 +85,81 @@ The Titanic API dashboard includes:
 5. **Memory Utilization**: Per-pod memory consumption
 6. **Pod Status**: Running pod count gauge
 
+## Alert Notifications
+
+**Current Status:** Alerts fire in Prometheus/AlertManager but require email configuration.
+
+### Configure Email Notifications (Secure Method)
+
+**Step 1: Apply Terraform to create secret placeholder**
+```bash
+cd infra
+./deploy.sh dev apply module.secrets
+```
+
+**Step 2: Store SMTP credentials in AWS Secrets Manager**
+```bash
+cd k8s/monitoring
+./store-smtp-secret.sh  <dev|staging|prod>
+```
+
+**Step 3: Sync secrets to Kubernetes**
+```bash
+./sync-alertmanager-secrets.sh <dev|staging|prod>
+```
+
+**Step 4: Configure AlertManager**
+```bash
+./configure-email-alerts.sh <dev|staging|prod>
+```
+
+See [EMAIL_ALERTS.md](EMAIL_ALERTS.md) for detailed setup instructions.
+
+### Alert Routing
+- **Critical alerts** → On-call email (immediate action)
+- **Warning alerts** → Team email (investigation needed)
+- **Resolved alerts** → Confirmation emails sent
+
+### Security
+- SMTP credentials stored in AWS Secrets Manager
+- Synced to Kubernetes secrets
+- Never committed to Git
+
 ## Alert Rules
 
-### Critical Alerts
-- **HighErrorRate**: >5% error rate for 5 minutes
-- **PodCrashLooping**: Pod restarting continuously
-- **PodNotReady**: Pod not running for 10 minutes
-- **DatabaseConnectionFailure**: High 500 error rate
+We have 8 alert rules configured across 3 severity levels:
 
-### Warning Alerts
-- **HighLatency**: P95 latency >1s for 5 minutes
-- **HighMemoryUsage**: >85% memory usage
-- **HighCPUUsage**: >85% CPU usage
+### 🔴 Critical Alerts (Immediate Action Required)
 
-### Info Alerts
-- **LowRequestRate**: Very low traffic detected
+| Alert | Condition | Duration | Description |
+|-------|-----------|----------|-------------|
+| **HighErrorRate** | Error rate >5% | 5 minutes | Triggers when 5xx errors exceed 5% of total requests |
+| **PodCrashLooping** | Pod restart rate >0 | 5 minutes | Pod is continuously restarting, indicates application crash |
+| **PodNotReady** | Pod not in Running state | 10 minutes | Pod stuck in Pending/Failed/Unknown state |
+| **DatabaseConnectionFailure** | 500 error rate >0.1/s | 2 minutes | High rate of 500 errors, likely database connectivity issues |
+
+### ⚠️ Warning Alerts (Investigation Needed)
+
+| Alert | Condition | Duration | Description |
+|-------|-----------|----------|-------------|
+| **HighLatency** | P95 latency >1s | 5 minutes | 95th percentile response time exceeds 1 second |
+| **HighMemoryUsage** | Memory usage >85% | 5 minutes | Pod consuming >85% of memory limit, risk of OOMKill |
+| **HighCPUUsage** | CPU usage >85% | 5 minutes | Pod consuming >85% of CPU quota, may cause throttling |
+
+### ℹ️ Info Alerts (Awareness)
+
+| Alert | Condition | Duration | Description |
+|-------|-----------|----------|-------------|
+| **LowRequestRate** | Request rate <0.01/s | 10 minutes | Very low traffic, possible service disruption or routing issue |
+
+### Alert Configuration
+
+All alerts are defined in `prometheus-rules.yaml` and automatically loaded by Prometheus. Alerts fire when conditions are met for the specified duration, reducing false positives.
+
+**Customize thresholds** by editing `prometheus-rules.yaml` and reapplying:
+```bash
+kubectl apply -f prometheus-rules.yaml
+```
 
 ## Metrics Exposed
 
