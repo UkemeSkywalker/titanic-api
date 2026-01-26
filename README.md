@@ -9,14 +9,8 @@ Production-ready Flask REST API for Titanic passenger data with complete AWS inf
 A microservice built with Flask that provides CRUD operations for Titanic passenger data. Fully deployed on AWS EKS with PostgreSQL RDS, complete CI/CD pipeline, GitOps with ArgoCD, and comprehensive monitoring with Prometheus and Grafana.
 
 ## Architecture
+!["Architecture Diagram"](./images/architecture.jpg)
 
-```
-Developer → GitHub → CI/CD Pipeline → Docker Hub → ArgoCD → EKS Cluster
-                          ↓                           ↓
-                    Tests + Security Scan      Auto-sync Deployment
-                          ↓                           ↓
-                   Multi-tag Images            Prometheus Monitoring
-```
 
 ## Tech Stack
 
