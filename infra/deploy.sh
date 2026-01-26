@@ -3,11 +3,13 @@ set -e
 
 ENVIRONMENT=$1
 ACTION=${2:-plan}
+TARGET=$3
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 BUCKET_NAME="titanic-api-terraform-state-${ACCOUNT_ID}"
 
 if [ -z "$ENVIRONMENT" ]; then
-  echo "Usage: ./deploy.sh <dev|staging|prod> [plan|apply|destroy]"
+  echo "Usage: ./deploy.sh <dev|staging|prod> [plan|apply|destroy] [target]"
+  echo "Example: ./deploy.sh dev apply module.eks"
   exit 1
 fi
 
@@ -19,6 +21,9 @@ fi
 echo "🚀 Deploying Titanic API Infrastructure"
 echo "Environment: $ENVIRONMENT"
 echo "Action: $ACTION"
+if [ -n "$TARGET" ]; then
+  echo "Target: $TARGET"
+fi
 echo ""
 
 # Check if backend exists
@@ -50,15 +55,29 @@ fi
 case $ACTION in
   plan)
     echo "📋 Planning infrastructure changes..."
-    terraform plan \
-      -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
-      -var="db_password=$DB_PASSWORD"
+    if [ -n "$TARGET" ]; then
+      terraform plan \
+        -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+        -var="db_password=$DB_PASSWORD" \
+        -target="$TARGET"
+    else
+      terraform plan \
+        -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+        -var="db_password=$DB_PASSWORD"
+    fi
     ;;
   apply)
     echo "🏗️  Applying infrastructure changes..."
-    terraform apply \
-      -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
-      -var="db_password=$DB_PASSWORD"
+    if [ -n "$TARGET" ]; then
+      terraform apply \
+        -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+        -var="db_password=$DB_PASSWORD" \
+        -target="$TARGET"
+    else
+      terraform apply \
+        -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+        -var="db_password=$DB_PASSWORD"
+    fi
     
     echo ""
     echo "✅ Deployment complete!"
@@ -72,9 +91,16 @@ case $ACTION in
     echo "🗑️  Destroying infrastructure..."
     read -p "Are you sure you want to destroy $ENVIRONMENT? (yes/no): " CONFIRM
     if [ "$CONFIRM" = "yes" ]; then
-      terraform destroy \
-        -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
-        -var="db_password=dummy"
+      if [ -n "$TARGET" ]; then
+        terraform destroy \
+          -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+          -var="db_password=dummy" \
+          -target="$TARGET"
+      else
+        terraform destroy \
+          -var-file="environments/$ENVIRONMENT/terraform.tfvars" \
+          -var="db_password=dummy"
+      fi
       echo "✅ Infrastructure destroyed"
     else
       echo "❌ Destroy cancelled"
