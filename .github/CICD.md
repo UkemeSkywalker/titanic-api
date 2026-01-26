@@ -87,22 +87,22 @@ black src/
 
 ```bash
 # Pull latest image
-docker pull ghcr.io/YOUR_USERNAME/titanic-api:latest
+docker pull YOUR_DOCKER_USERNAME/titanic-api:latest
 
 # Pull specific version
-docker pull ghcr.io/YOUR_USERNAME/titanic-api:v1.0.0
+docker pull YOUR_DOCKER_USERNAME/titanic-api:v1.0.0
 
 # Run container
 docker run -p 5000:5000 \
   -e DATABASE_URL=postgresql+psycopg2://user:password@host:5432/postgres \
-  ghcr.io/YOUR_USERNAME/titanic-api:latest
+  YOUR_DOCKER_USERNAME/titanic-api:latest
 ```
 
 ## Triggering the Pipeline
 
 ### Automatic Triggers
-- Push to `main` or `develop` branches
-- Pull requests to `main` or `develop`
+- Push to `main` or `DEV` branches
+- Pull requests to `main` or `DEV`
 - Creating a release
 
 ### Manual Trigger
