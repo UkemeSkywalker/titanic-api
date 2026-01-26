@@ -30,6 +30,63 @@ Developer → GitHub → CI/CD Pipeline → Docker Hub → ArgoCD → EKS Cluste
 
 ---
 
+## Project Structure
+
+```
+titanic-api/
+├── src/                           # Flask application
+│   ├── models/                   # SQLAlchemy models
+│   ├── views/                    # API endpoints
+│   ├── app.py                    # Application factory
+│   └── config.py                 # Configuration
+├── infra/                         # Terraform infrastructure
+│   ├── modules/
+│   │   ├── eks/                  # EKS + EBS CSI + StorageClass
+│   │   ├── rds/                  # PostgreSQL database
+│   │   ├── vpc/                  # Network infrastructure
+│   │   ├── iam/                  # IAM roles (IRSA)
+│   │   └── secrets/              # Secrets Manager
+│   ├── environments/
+│   │   ├── dev/terraform.tfvars
+│   │   ├── staging/terraform.tfvars
+│   │   └── prod/terraform.tfvars
+│   └── deploy.sh                 # Deployment script
+├── k8s/                           # Kubernetes manifests
+│   ├── helm/titanic-api/         # Helm chart
+│   │   ├── values.yaml
+│   │   ├── values-dev.yaml
+│   │   ├── values-staging.yaml
+│   │   └── values-prod.yaml
+│   ├── argocd/
+│   │   ├── applications/         # ArgoCD apps
+│   │   └── rollouts/             # Argo Rollouts
+│   ├── monitoring/
+│   │   ├── values-dev.yaml       # Prometheus config
+│   │   ├── prometheus-rules.yaml # Alert rules
+│   │   ├── dashboards/           # Grafana dashboards
+│   │   └── deploy-monitoring.sh
+│   ├── deploy-app.sh
+│   └── sync-secrets.sh
+├── .github/workflows/
+│   └── ci-cd.yml                 # CI/CD pipeline
+├── tests/                         # Unit tests
+├── Dockerfile                     # Production build
+├── docker-compose.yml             # Local development
+└── requirements.txt               # Python dependencies
+```
+
+---
+
+## Environments
+
+| Environment | Purpose | Auto-Deploy | Rollout Strategy |
+|-------------|---------|-------------|------------------|
+| **Dev** | Development & testing | ✅ Yes | Rolling update |
+| **Staging** | Pre-production validation | ✅ Yes | Rolling update |
+| **Prod** | Production workloads | ❌ Manual | Blue-green |
+
+---
+
 ## 1. Local Development
 
 ### Description
@@ -213,7 +270,7 @@ cd infra
 ---
 
 ## 4. CI/CD Pipeline (GitHub Actions)
-
+![pipeline](images/gha1.png)
 ### Description
 Automated CI/CD pipeline that runs on every push to main/dev branches or when theirs a release tag.
 Performs testing, linting, security scanning, builds Docker images with multiple tags, pushes to Docker Hub, and then sends a notification via email on the state of the pipeline [success/failure]. 
@@ -228,7 +285,7 @@ Images are then picked up by ArgoCD for deployment.
 - **Email notifications** on pipeline status
 
 ### Pipeline Stages
-
+![pipeline](images/gha2.png)
 #### 1. Test & Lint
 ```yaml
 - Run pytest with coverage (>70%)
@@ -258,6 +315,7 @@ Images are then picked up by ArgoCD for deployment.
 ```yaml
 - Email notification on success/failure
 ```
+!["notifications email](./images/notify.png )
 
 ### Image Tagging Strategy
 ```bash
@@ -304,7 +362,8 @@ EMAIL_TO
 ---
 
 ## 5. Kubernetes Deployment
-
+!["k8 pods"](./images/k81.png)
+!["k8 pods"](./images/k82.png)
 ### Description
 Application deployed to EKS using Helm charts with environment-specific configurations. Includes HPA for auto-scaling, rolling updates for zero-downtime deployments, and integration with AWS Secrets Manager for credentials.
 
@@ -387,7 +446,7 @@ k8s/helm/titanic-api/
 ---
 
 ## 6. ArgoCD (GitOps)
-
+!["Argocd"](./images/Argo.png)
 ### Description
 GitOps continuous deployment using ArgoCD. Automatically syncs Kubernetes manifests from Git repository to EKS cluster. Supports blue-green deployments with Argo Rollouts for production.
 
@@ -463,6 +522,8 @@ argocd app rollback titanic-api-dev
 ---
 
 ## 7. Monitoring & Observability
+!["Grafana1"](./images/Graf2.png)
+!["Grafana2"](./images/Graf1.png)
 
 ### Description
 Complete monitoring stack with Prometheus for metrics collection, Grafana for visualization, and AlertManager for email notifications. Monitors application performance, resource utilization, and sends alerts for critical issues.
@@ -571,6 +632,93 @@ kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-alertmanager 9
 
 ---
 
+## 8. Cost Optimization
+
+### Description
+Strategies and tools to optimize AWS infrastructure costs while maintaining performance and reliability. Includes resource right-sizing, auto-scaling, spot instances, and cost monitoring.
+
+### Current Cost Estimates
+
+| Environment | Monthly Cost | Key Services |
+|-------------|--------------|-------------|
+| **Dev** | ~$175 | EKS ($73), EC2 ($30), RDS ($15), NAT ($32) |
+| **Staging** | ~$175 | EKS ($73), EC2 ($30), RDS ($15), NAT ($32) |
+| **Prod** | ~$401 | EKS ($73), EC2 ($95), RDS ($120), NAT ($32) |
+| **Total** | **~$751/month** | |
+
+### Key Optimization Strategies
+
+#### 1. Spot Instances (Save 70%)
+```hcl
+# Use spot instances for non-prod
+capacity_type = "SPOT"
+instance_types = ["t3.small", "t3a.small", "t2.small"]
+```
+**Savings**: ~$87/month
+
+
+#### 4. Auto-Scaling
+- Horizontal Pod Autoscaler (HPA) - Already configured
+- Cluster Autoscaler - Scale nodes based on pod demand
+- RDS Auto-scaling - Storage grows automatically
+
+**Savings**: ~$50/month
+
+#### 5. Right-Sizing
+```bash
+# Monitor actual resource usage
+kubectl top nodes
+kubectl top pods -n titanic-api-dev
+
+# Downsize if CPU/Memory < 40%
+```
+**Savings**: ~$30/month
+
+### Tools & Resources
+- **AWS Cost Explorer** - Visualize spending patterns
+- **AWS Budgets** - Set alerts for cost thresholds
+- **AWS Cost Anomaly Detection** - Detect unusual spending
+- **CloudWatch Metrics** - Monitor resource utilization
+- **Terraform Cost Estimation** - Preview infrastructure costs
+
+### Cost Monitoring
+```bash
+# View monthly costs by service
+aws ce get-cost-and-usage \
+  --time-period Start=2024-01-01,End=2024-01-31 \
+  --granularity MONTHLY \
+  --metrics BlendedCost \
+  --group-by Type=SERVICE
+
+# Set budget alert
+aws budgets create-budget \
+  --account-id 123456789012 \
+  --budget file://budget.json
+```
+
+### Target Costs After Optimization
+
+| Environment | Before | After | Savings |
+|-------------|--------|-------|--------|
+| **Dev** | $175 | $75 | 57% |
+| **Staging** | $175 | $75 | 57% |
+| **Prod** | $401 | $250 | 38% |
+| **Total** | **$751** | **$400** | **47%** |
+
+### Quick Wins
+1. ✅ Enable Spot Instances for dev/staging
+2. ✅ Schedule shutdown for non-prod environments
+3. ✅ Delete unused EBS snapshots (>30 days)
+4. ✅ Enable S3 Intelligent-Tiering
+5. ✅ Use S3 Gateway Endpoint (free)
+6. ✅ Implement CloudWatch Logs retention (7 days)
+7. ✅ Right-size instances based on metrics
+8. ✅ Purchase Reserved Instances for prod
+
+📖 **Detailed guide**: [Cost Optimization](infra/COST_OPTIMIZATION.md)
+
+---
+
 ## Complete Deployment Workflow
 
 ### First-Time Setup
@@ -634,63 +782,6 @@ git push origin main
 
 # 7. ArgoCD automatically syncs to EKS
 ```
-
----
-
-## Project Structure
-
-```
-titanic-api/
-├── src/                           # Flask application
-│   ├── models/                   # SQLAlchemy models
-│   ├── views/                    # API endpoints
-│   ├── app.py                    # Application factory
-│   └── config.py                 # Configuration
-├── infra/                         # Terraform infrastructure
-│   ├── modules/
-│   │   ├── eks/                  # EKS + EBS CSI + StorageClass
-│   │   ├── rds/                  # PostgreSQL database
-│   │   ├── vpc/                  # Network infrastructure
-│   │   ├── iam/                  # IAM roles (IRSA)
-│   │   └── secrets/              # Secrets Manager
-│   ├── environments/
-│   │   ├── dev/terraform.tfvars
-│   │   ├── staging/terraform.tfvars
-│   │   └── prod/terraform.tfvars
-│   └── deploy.sh                 # Deployment script
-├── k8s/                           # Kubernetes manifests
-│   ├── helm/titanic-api/         # Helm chart
-│   │   ├── values.yaml
-│   │   ├── values-dev.yaml
-│   │   ├── values-staging.yaml
-│   │   └── values-prod.yaml
-│   ├── argocd/
-│   │   ├── applications/         # ArgoCD apps
-│   │   └── rollouts/             # Argo Rollouts
-│   ├── monitoring/
-│   │   ├── values-dev.yaml       # Prometheus config
-│   │   ├── prometheus-rules.yaml # Alert rules
-│   │   ├── dashboards/           # Grafana dashboards
-│   │   └── deploy-monitoring.sh
-│   ├── deploy-app.sh
-│   └── sync-secrets.sh
-├── .github/workflows/
-│   └── ci-cd.yml                 # CI/CD pipeline
-├── tests/                         # Unit tests
-├── Dockerfile                     # Production build
-├── docker-compose.yml             # Local development
-└── requirements.txt               # Python dependencies
-```
-
----
-
-## Environments
-
-| Environment | Purpose | Auto-Deploy | Rollout Strategy |
-|-------------|---------|-------------|------------------|
-| **Dev** | Development & testing | ✅ Yes | Rolling update |
-| **Staging** | Pre-production validation | ✅ Yes | Rolling update |
-| **Prod** | Production workloads | ❌ Manual | Blue-green |
 
 ---
 
